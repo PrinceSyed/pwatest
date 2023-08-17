@@ -3,10 +3,10 @@ self.addEventListener('install', (event) => {
     caches.open('my-game-cache').then((cache) => {
       return cache.addAll([
         './',
-        './Build/rp.data',
-        './Build/rp.framework',
-        './Build/v2/rp.loader',
-        './Build/rp.wasm',
+        './Build/v2.2.1 Mobile FIxes plus rp.data',
+        './Build/v2.2.1 Mobile FIxes plus rp.framework',
+        './Build/v2.2.1 Mobile FIxes plus rp.loader',
+        './Build/v2.2.1 Mobile FIxes plus rp.wasm',
       ]);
     })
   );
