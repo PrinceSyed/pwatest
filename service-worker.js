@@ -3,10 +3,10 @@ self.addEventListener('install', (event) => {
     caches.open('my-game-cache').then((cache) => {
       return cache.addAll([
         './',
-        // Add paths to assets you want to cache, e.g.
-        './Build/v2.2.1 Mobile FIxes plus rp.js',
-        './Build/YourProjectName.json',
-        // ... other asset files
+        './Build/v2.2.1 Mobile FIxes plus rp.data',
+        './Build/v2.2.1 Mobile FIxes plus rp.framework',
+        './Build/v2.2.1 Mobile FIxes plus rp.loader',
+        './Build/v2.2.1 Mobile FIxes plus rp',
       ]);
     })
   );
