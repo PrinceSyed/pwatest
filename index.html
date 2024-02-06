@@ -95,38 +95,40 @@
             canvas.style.height = window.innerHeight + "px";
             
             document.getElementById('startARDiv').style.display = 'none';
-            import('./lib/thirdweb-unity-bridge.js').then(() => {
-            createUnityInstance(document.querySelector("#unity-canvas"), {
-                    dataUrl: "Build/pwatest.data",
-                    frameworkUrl: "Build/pwatest.framework.js",
-                    codeUrl: "Build/pwatest.wasm",
-                    streamingAssetsUrl: "StreamingAssets",
-                    companyName: "DefaultCompany",
-                    productName: "Wif AR",
-                    productVersion: "0.1.0",
-                    //webglContextAttributes: { "preserveDrawingBuffer": true },
-                    // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-                    // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-                    },
-                    (progress) => {
+            
+            RequestWebcam().then(() => {
+                // After webcam permission is granted and AR is ready, then load the thirdweb Unity bridge
+                import('./lib/thirdweb-unity-bridge.js').then(() => {
+                    // Proceed to create Unity instance
+                    createUnityInstance(document.querySelector("#unity-canvas"), {
+                        dataUrl: "Build/pwatest.data",
+                        frameworkUrl: "Build/pwatest.framework.js",
+                        codeUrl: "Build/pwatest.wasm",
+                        streamingAssetsUrl: "StreamingAssets",
+                        companyName: "DefaultCompany",
+                        productName: "Wif AR",
+                        productVersion: "0.1.0",
+                    }, (progress) => {
                         progressBarFull.style.width = 100 * progress + "%";
-                    }
-                ).then((unityInstance) => {
-                    window.unityInstance = unityInstance;
-                    RequestWebcam();
-                    loadingBar.style.display = "none";
+                    }).then((unityInstance) => {
+                        window.unityInstance = unityInstance;
+                        // Unity instance is ready
+                        loadingBar.style.display = "none";
+                        // Potentially start webcam here if it hasn't started yet
+                    }).catch((error) => {
+                        console.error('Failed to create Unity instance:', error);
+                    });
                 }).catch((error) => {
-                    console.error('Failed to create Unity instance:', error);
+                    console.error('Failed to load thirdweb-unity-bridge.js:', error);
                 });
-            }).catch((error) => {
-                console.error('Failed to load thirdweb-unity-bridge.js:', error);
-            });
-            StartMotionSensors();
-            
-            StartGPS()
 
-            
-            loadingBar.style.display = "block";
+                StartMotionSensors();
+                StartGPS();
+                loadingBar.style.display = "block";
+            }).catch((error) => {
+                console.error("Webcam or AR initialization failed: ", error);
+                ShowError("Failed to start the AR experience. Please ensure you have granted camera access.");
+            });
         }
 
         window.WEBCAM_SETTINGS = {
