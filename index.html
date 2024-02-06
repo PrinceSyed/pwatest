@@ -102,13 +102,18 @@
             canvas.style.width = window.innerWidth + "px";
             canvas.style.height = window.innerHeight + "px";
             document.getElementById('startARDiv').style.display = 'none';
-            RequestWebcam(); // Consider moving this call to before Unity loading if the webcam is essential early on
 
-            // Import thirdweb-unity-bridge.js only when needed to reduce initial load time
+            // Ensure the loading bar is initially visible
+            var loadingBar = document.getElementById("unity-loading-bar");
+            var progressBarFull = document.getElementById("unity-progress-bar-full");
+            loadingBar.style.display = "block";
+            progressBarFull.style.width = "0%"; // Reset progress bar
+
+            // Dynamically import the thirdweb-unity-bridge.js
             import('./lib/thirdweb-unity-bridge.js').then(() => {
                 console.log("Thirdweb Unity Bridge loaded.");
-                // Proceed to create Unity instance after ensuring AR and other critical setups are ready
-                createUnityInstance(document.querySelector("#unity-canvas"), {
+                // Proceed to create Unity instance
+                createUnityInstance(canvas, {
                     dataUrl: "Build/pwatest.data",
                     frameworkUrl: "Build/pwatest.framework.js",
                     codeUrl: "Build/pwatest.wasm",
@@ -116,11 +121,20 @@
                     companyName: "DefaultCompany",
                     productName: "Wif AR",
                     productVersion: "0.1.0",
+                }, (progress) => {
+                    // Update progress bar during loading
+                    progressBarFull.style.width = (100 * progress) + "%";
                 }).then((unityInstance) => {
                     window.unityInstance = unityInstance;
-               
-                }).catch(console.error);
-            }).catch(console.error);
+                    loadingBar.style.display = "none"; // Hide loading bar once Unity is loaded
+                    RequestWebcam(); // Optionally move this call to before Unity loading if the webcam is essential early on
+                }).catch((error) => {
+                    console.error("Failed to create Unity instance:", error);
+                    loadingBar.style.display = "none"; // Ensure loading bar is hidden on error
+                });
+            }).catch((error) => {
+                console.error("Failed to load thirdweb-unity-bridge.js:", error);
+            });
 
             StartMotionSensors();
             StartGPS();
