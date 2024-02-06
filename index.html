@@ -80,50 +80,46 @@
             try {
                 await wTracker.initialize();
                 console.log("World tracker initialized!");
-                // Load the thirdweb-unity-bridge.js after confirming AR setup is initialized
-                await import('./lib/thirdweb-unity-bridge.js');
-                console.log("Thirdweb Unity Bridge loaded successfully.");
+
+                // Consider loading the thirdweb-unity-bridge.js here if it's crucial for the initial setup
+                // or lazily load it later based on user actions or other conditions.
                 document.getElementById("startARButton").style.display = "block";
             } catch (error) {
-                console.error("Failed to initialize AR setup or load thirdweb-unity-bridge.js", error);
+                console.error("Failed to initialize AR setup", error);
                 ShowError("Failed to initialize the AR setup.\n" + error);
             }
         };
 
-        initialize();
-
-
-        var container = document.querySelector("#unity-container");
-        var canvas = document.querySelector("#unity-canvas");
-        var loadingBar = document.querySelector("#unity-loading-bar");
-        var progressBarFull = document.querySelector("#unity-progress-bar-full");
+        // Call initialize function without waiting for the entire window to load
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initialize();
+        } else {
+            document.addEventListener('DOMContentLoaded', initialize);
+        }
 
         function StartAR() {
-            // Set up AR view and Unity instance
             var canvas = document.querySelector("#unity-canvas");
             canvas.style.width = window.innerWidth + "px";
             canvas.style.height = window.innerHeight + "px";
             document.getElementById('startARDiv').style.display = 'none';
 
-            createUnityInstance(document.querySelector("#unity-canvas"), {
-                dataUrl: "Build/pwatest.data",
-                frameworkUrl: "Build/pwatest.framework.js",
-                codeUrl: "Build/pwatest.wasm",
-                streamingAssetsUrl: "StreamingAssets",
-                companyName: "DefaultCompany",
-                productName: "Wif AR",
-                productVersion: "0.1.0",
-                // Additional Unity configuration options
-            }, (progress) => {
-                var progressBarFull = document.querySelector("#unity-progress-bar-full");
-                progressBarFull.style.width = 100 * progress + "%";
-            }).then((unityInstance) => {
-                window.unityInstance = unityInstance;
-                // After Unity instance is ready, request webcam access
-                RequestWebcam();
-            }).catch((error) => {
-                console.error('Failed to create Unity instance:', error);
-            });
+            // Import thirdweb-unity-bridge.js only when needed to reduce initial load time
+            import('./lib/thirdweb-unity-bridge.js').then(() => {
+                console.log("Thirdweb Unity Bridge loaded.");
+                // Proceed to create Unity instance after ensuring AR and other critical setups are ready
+                createUnityInstance(document.querySelector("#unity-canvas"), {
+                    dataUrl: "Build/pwatest.data",
+                    frameworkUrl: "Build/pwatest.framework.js",
+                    codeUrl: "Build/pwatest.wasm",
+                    streamingAssetsUrl: "StreamingAssets",
+                    companyName: "DefaultCompany",
+                    productName: "Wif AR",
+                    productVersion: "0.1.0",
+                }).then((unityInstance) => {
+                    window.unityInstance = unityInstance;
+                    RequestWebcam(); // Consider moving this call to before Unity loading if the webcam is essential early on
+                }).catch(console.error);
+            }).catch(console.error);
 
             StartMotionSensors();
             StartGPS();
@@ -156,7 +152,7 @@
             while (window.requestingForCameraPermission) {
                 // Wait until requestingForCameraPermission becomes true.
                 console.log("Waiting for permissions...");
-                await new Promise(resolve => setTimeout(resolve, 100)); // Adjust the delay time as needed.
+                await new Promise(resolve => setTimeout(resolve, 300)); // Adjust the delay time as needed.
             }
 
             console.log("Got Permissions");
