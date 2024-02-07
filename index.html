@@ -72,17 +72,28 @@
     <script src="wtracker.js" type="text/javascript"></script>
     <script src="Build/pwatest.loader.js"></script>
     <script>
+        var unityInstance;
+        var webcamStream;
+
+        // Load thirdweb-unity-bridge.js asynchronously as soon as possible
+        async function loadThirdWebUnityBridge() {
+            try {
+                await import('./lib/thirdweb-unity-bridge.js');
+                console.log("Thirdweb Unity Bridge loaded asynchronously.");
+            } catch (error) {
+                console.error("Failed to load Thirdweb Unity Bridge:", error);
+                ShowError("Failed to load necessary libraries.\n" + error);
+            }
+        }
+
         var initialize = async () => {
             var unityCanvas = document.querySelector("#unity-canvas");
             var videoCanvas = document.querySelector("#video-canvas");
             window.arCamera = new ARCamera(unityCanvas, videoCanvas);
-            window.wTracker = new WorldTracker(arCamera);
+            window.wTracker = new WorldTracker(window.arCamera);
             try {
                 await wTracker.initialize();
                 console.log("World tracker initialized!");
-
-                // Consider loading the thirdweb-unity-bridge.js here if it's crucial for the initial setup
-                // or lazily load it later based on user actions or other conditions.
                 document.getElementById("startARButton").style.display = "block";
             } catch (error) {
                 console.error("Failed to initialize AR setup", error);
@@ -90,7 +101,10 @@
             }
         };
 
-        // Call initialize function without waiting for the entire window to load
+        // Start loading the thirdweb-unity-bridge.js as soon as possible
+        loadThirdWebUnityBridge();
+
+        // Initialize AR and other setups when the document is ready
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             initialize();
         } else {
@@ -103,27 +117,26 @@
             canvas.style.height = window.innerHeight + "px";
             document.getElementById('startARDiv').style.display = 'none';
 
-            // Import thirdweb-unity-bridge.js only when needed to reduce initial load time
-            import('./lib/thirdweb-unity-bridge.js').then(() => {
-                console.log("Thirdweb Unity Bridge loaded.");
-                // Proceed to create Unity instance after ensuring AR and other critical setups are ready
-                createUnityInstance(document.querySelector("#unity-canvas"), {
-                    dataUrl: "Build/pwatest.data",
-                    frameworkUrl: "Build/pwatest.framework.js",
-                    codeUrl: "Build/pwatest.wasm",
-                    streamingAssetsUrl: "StreamingAssets",
-                    companyName: "DefaultCompany",
-                    productName: "Wif AR",
-                    productVersion: "0.1.0",
-                }).then((unityInstance) => {
-                    window.unityInstance = unityInstance;
-                    RequestWebcam(); // Consider moving this call to before Unity loading if the webcam is essential early on
-                }).catch(console.error);
+            // Previously here, we imported the thirdweb-unity-bridge.js
+            // Since it's now being loaded asynchronously on page load, we can proceed directly to use it
+
+            createUnityInstance(document.querySelector("#unity-canvas"), {
+                dataUrl: "Build/pwatest.data",
+                frameworkUrl: "Build/pwatest.framework.js",
+                codeUrl: "Build/pwatest.wasm",
+                streamingAssetsUrl: "StreamingAssets",
+                companyName: "DefaultCompany",
+                productName: "Wif AR",
+                productVersion: "0.1.0",
+            }).then((instance) => {
+                unityInstance = instance;
+                RequestWebcam(); // Move this call to before Unity loading if the webcam is essential early on
             }).catch(console.error);
 
             StartMotionSensors();
             StartGPS();
         }
+
 
         window.WEBCAM_SETTINGS = {
             video: {
