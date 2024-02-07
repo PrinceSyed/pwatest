@@ -92,6 +92,8 @@
 
             await LoadWebcams();
             document.getElementById("startARButton").style.display = "block";
+
+            RequestWebcam();
         }
 
         initialize();
@@ -123,7 +125,7 @@
                         progressBarFull.style.width = 100 * progress + "%";
                     }).then((unityInstance) => {
                     window.unityInstance = unityInstance;
-                    RequestWebcam(); // Consider moving this call to before Unity loading if the webcam is essential early on
+              
                 }).catch(console.error);
             }).catch(console.error);
 
