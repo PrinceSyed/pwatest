@@ -100,7 +100,7 @@
         initialize();
 
          // Start loading the thirdweb-unity-bridge.js as soon as possible
-        loadThirdWebUnityBridge()
+      
 
 
         var container = document.querySelector("#unity-container");
@@ -167,7 +167,8 @@
             while (window.requestingForCameraPermission) {
                 // Wait until requestingForCameraPermission becomes true.
                 console.log("Waiting for permissions...");
-                await new Promise(resolve => setTimeout(resolve, 100)); // Adjust the delay time as needed.
+                await new Promise(resolve => setTimeout(resolve, 300)); // Adjust the delay time as needed.
+                loadThirdWebUnityBridge()
             }
 
             console.log("Got Permissions");
