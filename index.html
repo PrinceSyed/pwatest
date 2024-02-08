@@ -67,15 +67,15 @@
 
 
         // Load thirdweb-unity-bridge.js asynchronously as soon as possible
-        async function loadThirdWebUnityBridge() {
-            try {
-                const thirdWebUnityBridge = await import('./lib/thirdweb-unity-bridge.js');
-                console.log("Thirdweb Unity Bridge loaded asynchronously.", thirdWebUnityBridge);
-            } catch (error) {
-                console.error("Failed to load Thirdweb Unity Bridge:", error);
-                ShowError("Failed to load necessary libraries.\n" + error);
-            }
-        }
+        // async function loadThirdWebUnityBridge() {
+        //     try {
+        //         const thirdWebUnityBridge = await import('./lib/thirdweb-unity-bridge.js');
+        //         console.log("Thirdweb Unity Bridge loaded asynchronously.", thirdWebUnityBridge);
+        //     } catch (error) {
+        //         console.error("Failed to load Thirdweb Unity Bridge:", error);
+        //         ShowError("Failed to load necessary libraries.\n" + error);
+        //     }
+        // }
 
 
         var initialize = async() =>{
@@ -100,7 +100,7 @@
         initialize();
 
          // Start loading the thirdweb-unity-bridge.js as soon as possible
-        loadThirdWebUnityBridge()
+        //loadThirdWebUnityBridge()
 
 
         var container = document.querySelector("#unity-container");
