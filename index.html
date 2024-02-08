@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content='width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes'>
+    <meta name="viewport"
+        content='width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes'>
     <title>Unity WebGL Player | Moonbois</title>
     <link rel="stylesheet" href="TemplateData/style.css">
 
     <style>
-        html{
+        html {
             height: -webkit-fill-available;
         }
+
         body {
             margin: 0;
             padding: 0;
@@ -18,6 +21,7 @@
             width: 100vw;
             overflow: hidden;
         }
+
         .ctaDiv {
             display: flex;
             flex-direction: column;
@@ -33,18 +37,22 @@
         }
     </style>
 </head>
+
 <body>
     <video id="webcam-video" muted autoplay playsinline style="width:1px;position:absolute"></video>
     <canvas id="video-canvas" style="width:100%; height:100%; object-fit:cover; position:absolute"></canvas>
     <div id="startARDiv" class="ctaDiv">
         <select id="chooseCamSel" style="display: none;" onchange="SelectCam()"></select>
-        <p style="text-align: center; width:60vw">This augmented reality experience requires access to your device's camera and motion sensors</p>
+        <p style="text-align: center; width:60vw">This augmented reality experience requires access to your device's
+            camera and motion sensors</p>
         <button id="startARButton" style="display:none" onclick="StartAR()">ALLOW ACCESS</button>
     </div>
     <div id="screenshotDiv" style="display: none;" class="ctaDiv">
-        <div style="position:relative; background-color:white; padding:10px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.3), 0 6px 20px 0 rgba(0, 0, 0, 0.25);">
+        <div
+            style="position:relative; background-color:white; padding:10px; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.3), 0 6px 20px 0 rgba(0, 0, 0, 0.25);">
             <img id="screenshotImg" src="" alt="screenshot" style="width:80vw; height:80vh">
-            <button onclick="document.getElementById('screenshotDiv').style.display = 'none';" style="position:absolute; transform:translateY(-100%); right:0; top:0">Close</button>
+            <button onclick="document.getElementById('screenshotDiv').style.display = 'none';"
+                style="position:absolute; transform:translateY(-100%); right:0; top:0">Close</button>
         </div>
     </div>
     <div id="errorDiv" class="ctaDiv" style="display: none; background:#aaa">
@@ -66,26 +74,26 @@
     <script>
 
 
-        // Load thirdweb-unity-bridge.js asynchronously as soon as possible
-        async function loadThirdWebUnityBridge() {
-            try {
-                const thirdWebUnityBridge = await import('./lib/thirdweb-unity-bridge.js');
-                console.log("Thirdweb Unity Bridge loaded asynchronously.", thirdWebUnityBridge);
-            } catch (error) {
-                console.error("Failed to load Thirdweb Unity Bridge:", error);
-                ShowError("Failed to load necessary libraries.\n" + error);
-            }
-        }
+        // // Load thirdweb-unity-bridge.js asynchronously as soon as possible
+        // async function loadThirdWebUnityBridge() {
+        //     try {
+        //         const thirdWebUnityBridge = await import('./lib/thirdweb-unity-bridge.js');
+        //         console.log("Thirdweb Unity Bridge loaded asynchronously.", thirdWebUnityBridge);
+        //     } catch (error) {
+        //         console.error("Failed to load Thirdweb Unity Bridge:", error);
+        //         ShowError("Failed to load necessary libraries.\n" + error);
+        //     }
+        // }
 
 
-        var initialize = async() =>{
+        var initialize = async () => {
             var unityCanvas = document.querySelector("#unity-canvas");
             var videoCanvas = document.querySelector("#video-canvas");
             window.arCamera = new ARCamera(unityCanvas, videoCanvas);
             window.wTracker = new WorldTracker(arCamera);
-            try{
+            try {
                 await wTracker.initialize();
-                console.log("World tracker initialized!");   
+                console.log("World tracker initialized!");
             }
             catch (error) {
                 console.error("Failed to initialize world tracker. Are you missing opencv.js?", error);
@@ -99,8 +107,8 @@
 
         initialize();
 
-         // Start loading the thirdweb-unity-bridge.js as soon as possible
-      
+        // Start loading the thirdweb-unity-bridge.js as soon as possible
+
 
 
         var container = document.querySelector("#unity-container");
@@ -110,9 +118,18 @@
         function StartAR() {
             canvas.style.width = window.innerWidth + "px";
             canvas.style.height = window.innerHeight + "px";
-            
+
             document.getElementById('startARDiv').style.display = 'none';
-            createUnityInstance(document.querySelector("#unity-canvas"), {
+
+            // Request permissions for webcam and motion sensors first
+            RequestWebcam();
+            StartMotionSensors();
+            StartGPS();
+
+            // Load the thirdweb-unity-bridge.js library after permissions have been granted
+            loadThirdWebUnityBridge().then(() => {
+                // Proceed to initialize Unity instance after the third web library has loaded
+                createUnityInstance(document.querySelector("#unity-canvas"), {
                     dataUrl: "Build/pwatest.data",
                     frameworkUrl: "Build/pwatest.framework.js",
                     codeUrl: "Build/pwatest.wasm",
@@ -120,26 +137,30 @@
                     companyName: "Spiked Rollups",
                     productName: "Moonbois",
                     productVersion: "0.1.0",
-                    //webglContextAttributes: { "preserveDrawingBuffer": true },
-                    // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
-                    // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-                    },
-                    (progress) => {
-                        progressBarFull.style.width = 100 * progress + "%";
-                    }
-                ).then((unityInstance) => {
-                window.unityInstance = unityInstance;
-                RequestWebcam();
-                loadingBar.style.display = "none";
+                }, (progress) => {
+                    progressBarFull.style.width = 100 * progress + "%";
+                }).then((unityInstance) => {
+                    window.unityInstance = unityInstance;
+                    loadingBar.style.display = "none";
+                }).catch(error => {
+                    console.error("Unity instance creation failed:", error);
+                });
+            }).catch(error => {
+                console.error("Failed to load Thirdweb Unity Bridge:", error);
             });
-            StartMotionSensors();
-            
-            StartGPS()
 
-            
             loadingBar.style.display = "block";
         }
 
+        async function loadThirdWebUnityBridge() {
+            try {
+                const thirdWebUnityBridge = await import('./lib/thirdweb-unity-bridge.js');
+                console.log("Thirdweb Unity Bridge loaded asynchronously.", thirdWebUnityBridge);
+            } catch (error) {
+                console.error("Failed to load Thirdweb Unity Bridge:", error);
+                ShowError("Failed to load necessary libraries.\n" + error);
+            }
+        }
         window.WEBCAM_SETTINGS = {
             video: {
                 facingMode: "environment",
@@ -147,34 +168,32 @@
             audio: false
         };
         window.requestingForCameraPermission = false;
-        async function RequestWebcam(){
+        async function RequestWebcam() {
             window.requestingForCameraPermission = true;
-            try{
+            try {
                 window.webcamStream = await navigator.mediaDevices.getUserMedia(window.WEBCAM_SETTINGS);
                 console.log("Webcam access granted");
                 requestingForCameraPermission = false;
             }
             catch (err) {
                 //user denied camera permission - show error panel
-                console.error("getUserMedia error - " , err);
+                console.error("getUserMedia error - ", err);
                 ShowError("Failed to start the experience. Camera permission was denied");
                 window.requestingForCameraPermission = false;
-            }           
+            }
         }
-        async function StartWebcam(){
+        async function StartWebcam() {
             console.log("StartWebcam")
 
             while (window.requestingForCameraPermission) {
                 // Wait until requestingForCameraPermission becomes true.
                 console.log("Waiting for permissions...");
-                await new Promise(resolve => setTimeout(resolve, 300)); // Adjust the delay time as needed.
-                loadThirdWebUnityBridge()
+                await new Promise(resolve => setTimeout(resolve, 100)); // Adjust the delay time as needed.
             }
 
             console.log("Got Permissions");
 
-            if(window.webcamStream)
-            {
+            if (window.webcamStream) {
                 const video = document.querySelector("#webcam-video");
                 video.srcObject = webcamStream;
                 try {
@@ -183,18 +202,18 @@
 
                     window.unityInstance.SendMessage('ARCamera', 'OnStartWebcamSuccess');
                 }
-                catch(err){
+                catch (err) {
                     console.error("Webcam failed to start - ", err);
                     window.unityInstance.SendMessage('ARCamera', 'OnStartWebcamFail');
-                }   
+                }
             }
-            else{
+            else {
                 console.error("Webcam failed to start - permission not yet granted");
                 window.unityInstance.SendMessage('ARCamera', 'OnStartWebcamFail');
-            }  
+            }
         }
 
-        async function LoadWebcams(){
+        async function LoadWebcams() {
             let backCams = [];
             let devices = await navigator.mediaDevices.enumerateDevices();
             devices.forEach(mediaDevice => {
@@ -222,7 +241,7 @@
             });
             wTracker.WEBCAM_NAME = select.options[select.selectedIndex].innerHTML;
         }
-        function SelectCam(){
+        function SelectCam() {
             var select = document.getElementById("chooseCamSel");
             window.deviceId = select.value;
             window.WEBCAM_SETTINGS.video['deviceId'] = deviceId;
@@ -230,42 +249,43 @@
             wTracker.WEBCAM_NAME = select.options[select.selectedIndex].innerHTML;
         }
 
-        function StartMotionSensors(){
+        function StartMotionSensors() {
             window.wTracker.startAngles()
-            .then(()=>{
-                console.log("Motion sensors started");
-            })
-            .catch(error=>{
-                console.error("Failed to start motion sensors - " + error);
-                ShowError("Failed to start the experience. " + error);
+                .then(() => {
+                    console.log("Motion sensors started");
+                })
+                .catch(error => {
+                    console.error("Failed to start motion sensors - " + error);
+                    ShowError("Failed to start the experience. " + error);
 
-            });
+                });
         }
 
-        function StartGPS(){            
+        function StartGPS() {
             window.wTracker.startGPS()
-            .then((pos)=>{
-                console.log("GPS started", pos);
-            })
-            .catch(error=>{
-                console.error("Failed to start GPS - " + error);
-                //ShowError("Failed to start GPS " + error);
-            });
+                .then((pos) => {
+                    console.log("GPS started", pos);
+                })
+                .catch(error => {
+                    console.error("Failed to start GPS - " + error);
+                    //ShowError("Failed to start GPS " + error);
+                });
         }
-        
 
-        function ShowError(error){
+
+        function ShowError(error) {
             document.getElementById("errorDiv").style.display = "flex";
             document.getElementById("errorText").innerHTML = error;
         }
 
-        function ShowScreenshot(dataUrl){
+        function ShowScreenshot(dataUrl) {
             document.getElementById("screenshotDiv").style.display = "flex";
             document.getElementById("screenshotImg").src = dataUrl;
             document.getElementById("screenshotImg").style.width = "80vw";
             document.getElementById("screenshotImg").style.height = 80 / window.innerWidth * window.innerHeight + "vw";
         }
-        
+
     </script>
 </body>
+
 </html>
